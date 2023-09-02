@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.development.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"
+    ></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <title>React App</title>
+  </head>
+
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      let customers = [];
+      const capacity = 25;
+      let seatsLeft = 25;
+      let guestCount = React.createRef();
+      let PrimaryGuest = React.createRef();
+      let PhoneNumber = React.createRef();
+      const formref = React.createRef();
+
+      //unshift in array customers
+      function atcustomers(GuestCount,primary,number){
+        const details = {
+          GuestCount,
+          primary,
+          number,
+          checkin:new Date(),
+          checkout: null 
+        }
+
+        customers.unshift(details);
+      }
+
+      //for checking if customer exists
+      function enteryExists(number){
+        return customers.find((c)=>c.number === number && !c.checkout);
+      }
+
+      //for checkout
+      const handleCheckout = (number, GuestCount) => {
+        customers.forEach((c) => {
+          if (c.number === number) {
+            c.checkout = new Date();
+          }
+        });
+
+        seatsLeft += GuestCount;
+
+        rootElement.render(<App />);
+      };
+
+      //for deleting the entry from the table
+      const handleRemove = (index) => {
+        let removedEntry = customers.splice(index, 1);
+        if (!removedEntry[0].checkout) {
+          seatsLeft += removedEntry[0].guestCount;
+        }
+        rootElement.render(<App />);
+      };
+
+      //for submiting detail of the customer 
+      function handleSubmit(e) {
+          e.preventDefault();
+          const GuestCount = parseInt(guestCount.current.value);
+          const primary = PrimaryGuest.current.value;
+          const number = PhoneNumber.current.value;
+          if(enteryExists(number) ){
+            alert("Already Exists");
+            return;
+          }
+          if(GuestCount > seatsLeft){
+            alert("Guest count Increased");
+            return;
+          }
+          atcustomers(GuestCount,primary,number);
+          seatsLeft -= GuestCount;
+          formref.current.reset();
+          rootElement.render(<App />);
+      }
+
+      const App = () => (
+        <div className="App" style={{ textAlign: "center" }}>
+          <div>
+            <h2>Total Capacity: {capacity}</h2>
+            <h2>Seats Left: {seatsLeft}</h2>
+          </div>
+
+          {/* form */}
+          <form onSubmit={handleSubmit} ref={formref}>
+        	  <input placeholder="Guest Count" type="Number" ref={guestCount}/>
+            <input placeholder="Primary Guest Name" ref={PrimaryGuest}/>
+            <input placeholder="Phone Number" type="Number" ref={PhoneNumber}/>
+            <button>Add Entry</button>
+          </form>
+
+          {/* table */}
+          <table border="1px" style={{ margin: "auto" }}>
+        		<thead>
+        		<tr>
+         			<th>Count</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Check In</th>
+              <th>Check Out</th>
+              <th>Status</th>
+              <th>Remove Entry</th>
+        		</tr>
+        		</thead>
+            <tbody>
+              {customers.map((c, i) => (
+                <tr key={i}>
+                  <td>{c.GuestCount}</td>
+                  <td>{c.primary}</td>
+                  <td>{c.number}</td>
+                  <td>{c.checkin.toLocaleTimeString()}</td>
+                  <td>
+                    {c.checkout ? c.checkout.toLocaleTimeString() : <>-</>}
+                  </td>
+                  {c.checkout ? (
+                  <td className="served">Served</td>
+                  ) : (
+                    <td
+                      className="dining"
+                      onClick={() => {
+                        handleCheckout(c.number, c.GuestCount);
+                      }}
+                    >
+                      Click to Checkout
+                    </td>
+                  )}
+                  <td onClick={() => {handleRemove(i)}}>Delete</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+
+      const rootElement = ReactDOM.createRoot(document.getElementById("root"));
+      rootElement.render(<App />);
+    </script>
+
+  </body>
+</html>
